@@ -5,6 +5,7 @@
 If you discover a security vulnerability within this project, please send an email to security@yourdomain.com. All security vulnerabilities will be promptly addressed.
 
 Please include the following information in your report:
+
 - Type of vulnerability
 - Location of the vulnerability
 - Steps to reproduce
@@ -14,6 +15,7 @@ Please include the following information in your report:
 ## Security Measures Implemented
 
 ### 1. Authentication & Authorization
+
 - Multi-Factor Authentication (MFA) support
 - Strong password policies
 - JWT-based authentication with refresh tokens
@@ -21,6 +23,7 @@ Please include the following information in your report:
 - Session management with secure token rotation
 
 ### 2. Data Protection
+
 - End-to-end encryption for sensitive data
 - Data masking for sensitive information
 - Secure data transmission over HTTPS
@@ -28,6 +31,7 @@ Please include the following information in your report:
 - Proper data deletion procedures
 
 ### 3. API Security
+
 - Rate limiting to prevent abuse
 - Input validation and sanitization
 - CORS configuration
@@ -35,6 +39,7 @@ Please include the following information in your report:
 - Request/Response validation
 
 ### 4. Frontend Security
+
 - Content Security Policy (CSP)
 - XSS protection
 - CSRF protection
@@ -42,6 +47,7 @@ Please include the following information in your report:
 - Frame protection (Clickjacking prevention)
 
 ### 5. Monitoring & Logging
+
 - Security event logging
 - Performance monitoring
 - Error tracking
@@ -49,6 +55,7 @@ Please include the following information in your report:
 - Audit trails for sensitive actions
 
 ### 6. Infrastructure Security
+
 - Regular security updates
 - Network security configuration
 - DDoS protection
