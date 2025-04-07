@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       setUser(response.user);
-      return { success: true };
+      return { success: true, user: response.user };
     } catch (error) {
       setError(error.message || 'Failed to login');
       throw error;
