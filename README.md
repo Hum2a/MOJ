@@ -2,7 +2,9 @@
 
 <div align="center">
 
-![HMCTS Task Manager](client/public/logo192.png)
+![Ministry of Justice](client/public/Ministry_of_Justice_logo.svg_.png)
+
+<br>
 
 [![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-9.22.0-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
@@ -141,6 +143,46 @@ npm start
 ```
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🖼️ Branding Assets
+
+The application includes a comprehensive set of branding assets:
+
+### Logos & Icons
+
+- **Ministry of Justice Logo**: Used on landing page and official documents
+- **Application Icons**: Available in multiple sizes for different platforms
+  - `logo192.png` - Used by React and for smaller displays
+  - `logo512.png` - Used for larger displays and splash screens
+
+### Favicon Package
+
+A complete favicon package is included for cross-platform support:
+
+| File | Size | Purpose |
+|------|------|---------|
+| favicon.ico | 16x16, 32x32 | Standard browser favicon |
+| favicon-16x16.png | 16x16 | Small devices and fallback |
+| favicon-32x32.png | 32x32 | Standard size for most browsers |
+| apple-touch-icon.png | 180x180 | iOS home screen icon |
+| android-chrome-192x192.png | 192x192 | Android home screen icon |
+| android-chrome-512x512.png | 512x512 | Android splash screen |
+
+### Using the Branding Assets
+
+If you need to incorporate these assets in additional locations:
+
+```html
+<!-- Basic favicon -->
+<link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+
+<!-- iOS specific -->
+<link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+
+<!-- Android specific -->
+<link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="%PUBLIC_URL%/android-chrome-512x512.png" />
+```
 
 ## 🏗️ Architecture
 
