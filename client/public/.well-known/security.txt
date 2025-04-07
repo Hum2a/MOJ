@@ -1,7 +1,7 @@
-Contact: mailto:security@yourdomain.com
+Contact: mailto:security@hmcts.onrender.com
 Expires: 2025-02-20T00:00:00.000Z
-Encryption: https://yourdomain.com/pgp-key.txt
+Encryption: https://hmcts.onrender.com/pgp-key.txt
 Preferred-Languages: en
-Canonical: https://yourdomain.com/.well-known/security.txt
-Policy: https://yourdomain.com/security-policy
-Hiring: https://yourdomain.com/careers 
+Canonical: https://hmcts.onrender.com/.well-known/security.txt
+Policy: https://hmcts.onrender.com/security-policy
+Hiring: https://hmcts.onrender.com/careers 
