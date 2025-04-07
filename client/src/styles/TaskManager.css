@@ -693,3 +693,30 @@
 .logout-button:active {
   transform: translateY(0);
 }
+
+.user-select {
+  min-height: 100px !important;
+  background-color: white !important;
+}
+
+.user-select option {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.user-select option:checked {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.help-text {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.task-metadata .task-assigned::before {
+  content: "👥";
+}

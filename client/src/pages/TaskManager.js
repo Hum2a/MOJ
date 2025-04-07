@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/TaskManager.css';
 import { taskService } from '../services/taskService';
+import { userService } from '../services/userService';
 
 const logComponentAction = (action, data = null) => {
   console.log(`%c[TaskManager] ${action}`, 'color: #9C27B0; font-weight: bold;');
@@ -19,12 +20,14 @@ const TaskManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortBy, setSortBy] = useState('dueDate-asc');
+  const [users, setUsers] = useState([]);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     status: 'Pending',
     dueDate: '',
-    dueTime: ''
+    dueTime: '',
+    assignedUsers: []
   });
   const [editingTask, setEditingTask] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -34,6 +37,7 @@ const TaskManager = () => {
   useEffect(() => {
     logComponentAction('Component Mounted');
     fetchTasks();
+    fetchUsers();
   }, []);
 
   useEffect(() => {
@@ -98,6 +102,15 @@ const TaskManager = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const usersList = await userService.getAllUsers();
+      setUsers(usersList);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -148,7 +161,8 @@ const TaskManager = () => {
         description: '',
         status: 'Pending',
         dueDate: '',
-        dueTime: ''
+        dueTime: '',
+        assignedUsers: []
       });
       setShowAddForm(false);
     } catch (error) {
@@ -415,6 +429,40 @@ const TaskManager = () => {
             </div>
           </div>
           <div className="form-group">
+            <label htmlFor="assignedUsers">Assign Users (optional)</label>
+            <select
+              id="assignedUsers"
+              name="assignedUsers"
+              multiple
+              value={newTask.assignedUsers}
+              onChange={(e) => {
+                const selectedUsers = Array.from(e.target.selectedOptions, option => option.value);
+                // Check if "all" is selected
+                if (selectedUsers.includes('all')) {
+                  // If "all" is selected, include all user IDs
+                  setNewTask(prev => ({
+                    ...prev,
+                    assignedUsers: users.map(user => user.uid)
+                  }));
+                } else {
+                  setNewTask(prev => ({
+                    ...prev,
+                    assignedUsers: selectedUsers
+                  }));
+                }
+              }}
+              className="user-select"
+            >
+              <option value="all">All Users</option>
+              {users.map(user => (
+                <option key={user.uid} value={user.uid}>
+                  {user.name} ({user.email})
+                </option>
+              ))}
+            </select>
+            <small className="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple users, or choose "All Users" to assign to everyone</small>
+          </div>
+          <div className="form-group">
             <label htmlFor="status">Status</label>
             <select
               id="status"
@@ -480,6 +528,40 @@ const TaskManager = () => {
             </div>
           </div>
           <div className="form-group">
+            <label htmlFor="edit-assignedUsers">Assign Users (optional)</label>
+            <select
+              id="edit-assignedUsers"
+              name="assignedUsers"
+              multiple
+              value={editingTask.assignedUsers || []}
+              onChange={(e) => {
+                const selectedUsers = Array.from(e.target.selectedOptions, option => option.value);
+                // Check if "all" is selected
+                if (selectedUsers.includes('all')) {
+                  // If "all" is selected, include all user IDs
+                  setEditingTask(prev => ({
+                    ...prev,
+                    assignedUsers: users.map(user => user.uid)
+                  }));
+                } else {
+                  setEditingTask(prev => ({
+                    ...prev,
+                    assignedUsers: selectedUsers
+                  }));
+                }
+              }}
+              className="user-select"
+            >
+              <option value="all">All Users</option>
+              {users.map(user => (
+                <option key={user.uid} value={user.uid}>
+                  {user.name} ({user.email})
+                </option>
+              ))}
+            </select>
+            <small className="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple users, or choose "All Users" to assign to everyone</small>
+          </div>
+          <div className="form-group">
             <label htmlFor="edit-status">Status</label>
             <select
               id="edit-status"
@@ -521,6 +603,14 @@ const TaskManager = () => {
               <p className="task-due-date">
                 Due: {formatDueDate(task.dueDate, task.hasTime)}
               </p>
+              {task.assignedUsers && task.assignedUsers.length > 0 && (
+                <p className="task-assigned">
+                  Assigned to: {task.assignedUsers.map(uid => {
+                    const user = users.find(u => u.uid === uid);
+                    return user ? user.name : 'Unknown';
+                  }).join(', ')}
+                </p>
+              )}
               <p className="task-issuer">
                 Created by: {task.createdBy?.name || task.createdBy?.email || 'Unknown'}
               </p>

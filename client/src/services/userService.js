@@ -1,4 +1,4 @@
-import { getFirestore, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { app } from '../firebase/firebase';
 
 const db = getFirestore(app);
@@ -67,6 +67,26 @@ export const userService = {
       return null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      throw error;
+    }
+  },
+
+  // Get all users
+  getAllUsers: async () => {
+    try {
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const users = [];
+      usersSnapshot.forEach(doc => {
+        const userData = doc.data();
+        users.push({
+          uid: doc.id,
+          email: userData.email,
+          name: userData.name || userData.email
+        });
+      });
+      return users;
+    } catch (error) {
+      console.error('Error fetching users:', error);
       throw error;
     }
   }
