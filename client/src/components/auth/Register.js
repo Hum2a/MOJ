@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { userService } from '../../services/userService';
 
 const Register = ({ onCancel, onRegistrationSuccess }) => {
   const { register } = useAuth();
@@ -40,10 +41,17 @@ const Register = ({ onCancel, onRegistrationSuccess }) => {
     setLoading(true);
 
     try {
-      await register({
+      // Register the user with Firebase Auth
+      const { user } = await register({
         email: registerData.email,
         password: registerData.password,
         name: registerData.name
+      });
+
+      // Create user profile in Firestore
+      await userService.createUserProfile(user, {
+        name: registerData.name,
+        role: 'user' // Default role for new users
       });
       
       // After successful registration, pass the data back to parent
@@ -52,6 +60,7 @@ const Register = ({ onCancel, onRegistrationSuccess }) => {
         password: registerData.password
       });
     } catch (error) {
+      console.error('Registration error:', error);
       setRegisterError(error.message || 'Failed to register');
     } finally {
       setLoading(false);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { userService } from '../../services/userService';
 
 const Login = ({ onCancel, onSwitchToRegister }) => {
   const navigate = useNavigate();
@@ -46,10 +47,13 @@ const Login = ({ onCancel, onSwitchToRegister }) => {
         setMfaData(prev => ({ ...prev, tempToken: response.tempToken }));
         setShowMFA(true);
       } else {
+        // Update last login timestamp
+        await userService.createUserProfile(response.user);
         const from = location.state?.from?.pathname || '/tasks';
         navigate(from);
       }
     } catch (error) {
+      console.error('Login error:', error);
       setLoginError(error.message || 'Failed to login');
     } finally {
       setLoading(false);
@@ -62,10 +66,15 @@ const Login = ({ onCancel, onSwitchToRegister }) => {
     setLoading(true);
 
     try {
-      await login.verifyMFA(mfaData.tempToken, mfaData.code);
+      const response = await login.verifyMFA(mfaData.tempToken, mfaData.code);
+      // Update last login timestamp after MFA verification
+      if (response.user) {
+        await userService.createUserProfile(response.user);
+      }
       const from = location.state?.from?.pathname || '/tasks';
       navigate(from);
     } catch (error) {
+      console.error('MFA verification error:', error);
       setLoginError(error.message || 'Failed to verify MFA code');
     } finally {
       setLoading(false);

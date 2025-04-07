@@ -1,0 +1,73 @@
+import { getFirestore, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { app } from '../firebase/firebase';
+
+const db = getFirestore(app);
+
+export const userService = {
+  // Create or update user profile
+  createUserProfile: async (user, additionalData = {}) => {
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnapshot = await getDoc(userRef);
+
+      if (!userSnapshot.exists()) {
+        // Create new user profile
+        const userData = {
+          uid: user.uid,
+          email: user.email,
+          name: additionalData.name || user.displayName || '',
+          role: additionalData.role || 'user',
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        await setDoc(userRef, userData);
+        return userData;
+      } else {
+        // Update existing user's last login
+        const updateData = {
+          lastLogin: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await updateDoc(userRef, updateData);
+        return { ...userSnapshot.data(), ...updateData };
+      }
+    } catch (error) {
+      console.error('Error creating/updating user profile:', error);
+      throw error;
+    }
+  },
+
+  // Update user profile
+  updateUserProfile: async (uid, data) => {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const updateData = {
+        ...data,
+        updatedAt: new Date().toISOString()
+      };
+      await updateDoc(userRef, updateData);
+      return updateData;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  },
+
+  // Get user profile
+  getUserProfile: async (uid) => {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const userSnapshot = await getDoc(userRef);
+      
+      if (userSnapshot.exists()) {
+        return userSnapshot.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      throw error;
+    }
+  }
+}; 
