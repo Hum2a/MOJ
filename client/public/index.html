@@ -1,43 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Enhanced Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https:;
+      connect-src 'self' http://localhost:* https://ministryofjustice-c0344.firebaseio.com;
+      worker-src 'self' blob:;
+      manifest-src 'self';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+      block-all-mixed-content;" />
+    
+    <!-- Additional Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="
+      accelerometer=(),
+      ambient-light-sensor=(),
+      autoplay=(),
+      battery=(),
+      camera=(),
+      cross-origin-isolated=(),
+      display-capture=(),
+      document-domain=(),
+      encrypted-media=(),
+      execution-while-not-rendered=(),
+      execution-while-out-of-viewport=(),
+      fullscreen=(),
+      geolocation=(),
+      gyroscope=(),
+      keyboard-map=(),
+      magnetometer=(),
+      microphone=(),
+      midi=(),
+      navigation-override=(),
+      payment=(),
+      picture-in-picture=(),
+      publickey-credentials-get=(),
+      screen-wake-lock=(),
+      sync-xhr=(),
+      usb=(),
+      web-share=(),
+      xr-spatial-tracking=()" />
+    
+    <!-- HSTS -->
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload" />
+    
+    <!-- Cache Control -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    <!-- PWA Support -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Task Manager" />
+    
+    <!-- Icons -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="mask-icon" href="%PUBLIC_URL%/safari-pinned-tab.svg" color="#6366f1" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Task Manager - Organize Your Tasks Efficiently</title>
+    <meta name="title" content="Task Manager - Organize Your Tasks Efficiently" />
+    <meta name="description" content="A modern task management application that helps you organize, track, and complete your tasks efficiently. Features include task filtering, sorting, and real-time updates." />
+    <meta name="keywords" content="task manager, todo list, project management, task organization, productivity tool" />
+    <meta name="author" content="Ministry of Justice" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%PUBLIC_URL%" />
+    <meta property="og:title" content="Task Manager - Organize Your Tasks Efficiently" />
+    <meta property="og:description" content="A modern task management application that helps you organize, track, and complete your tasks efficiently." />
+    <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="%PUBLIC_URL%" />
+    <meta property="twitter:title" content="Task Manager - Organize Your Tasks Efficiently" />
+    <meta property="twitter:description" content="A modern task management application that helps you organize, track, and complete your tasks efficiently." />
+    <meta property="twitter:image" content="%PUBLIC_URL%/og-image.png" />
+    
+    <!-- Preconnect to important domains -->
+    <link rel="preconnect" href="https://ministryofjustice-c0344.firebaseio.com" />
+    <link rel="dns-prefetch" href="https://ministryofjustice-c0344.firebaseio.com" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- iOS Smart App Banner -->
+    <meta name="apple-itunes-app" content="app-id=YOUR_APP_ID,app-argument=YOUR_APP_SCHEME://" />
+    
+    <!-- Windows Tiles -->
+    <meta name="msapplication-TileColor" content="#6366f1" />
+    <meta name="msapplication-config" content="%PUBLIC_URL%/browserconfig.xml" />
+    
+    <!-- Prevent automatic phone number linking -->
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Disable automatic translation suggestion -->
+    <meta name="google" content="notranslate" />
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- Error Boundary for React -->
+    <script>
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        // Log error securely
+        const sanitizedMsg = msg.toString().replace(/[<>]/g, '');
+        const sanitizedUrl = url.toString().replace(/[<>]/g, '');
+        console.error('Error:', {
+          message: sanitizedMsg,
+          url: sanitizedUrl,
+          line: lineNo,
+          column: columnNo,
+          stack: error?.stack?.toString().replace(/[<>]/g, '')
+        });
+        return false;
+      };
+
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(event) {
+        event.preventDefault();
+        const sanitizedReason = event.reason?.toString().replace(/[<>]/g, '');
+        console.error('Unhandled promise rejection:', sanitizedReason);
+      });
+
+      // Prevent common XSS vectors
+      Object.freeze(window.__proto__);
+      Object.freeze(window.document.__proto__);
+    </script>
+
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: system-ui, -apple-system, sans-serif;">
+        <h1>JavaScript Required</h1>
+        <p>We're sorry, but this application requires JavaScript to function properly. Please enable JavaScript in your browser settings and reload the page.</p>
+      </div>
+    </noscript>
+    
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
   </body>
 </html>
