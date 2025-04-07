@@ -8,6 +8,10 @@ const ProfileModal = ({ profile, onClose }) => {
   const [stats, setStats] = useState({ created: 0, assigned: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({});
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState(null);
   const modalRef = useRef(null);
 
   // Handle ESC key to close the modal
@@ -33,6 +37,16 @@ const ProfileModal = ({ profile, onClose }) => {
       clearTimeout(timer);
     };
   }, []);
+  
+  // Initialize editedProfile when profile changes
+  useEffect(() => {
+    if (profile) {
+      setEditedProfile({
+        name: profile.name || '',
+        role: profile.role || 'User'
+      });
+    }
+  }, [profile]);
 
   // Fetch or extract user statistics
   useEffect(() => {
@@ -79,6 +93,34 @@ const ProfileModal = ({ profile, onClose }) => {
       onClose();
     }, 300); // Match with the CSS transition duration
   };
+  
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedProfile(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleSaveProfile = async () => {
+    if (!profile.uid) return;
+    
+    setUpdateLoading(true);
+    setUpdateError(null);
+    
+    try {
+      await userService.updateUserProfile(profile.uid, editedProfile);
+      setIsEditing(false);
+      // Update the displayed profile with new values
+      profile.name = editedProfile.name;
+      profile.role = editedProfile.role;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setUpdateError('Failed to update profile');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   if (!profile) {
     console.log('No profile provided, returning null');
@@ -104,6 +146,12 @@ const ProfileModal = ({ profile, onClose }) => {
         <button className="close-button" onClick={handleClose}>×</button>
         <div className="profile-header">
           <h2>User Profile</h2>
+          <button 
+            className="edit-profile-button"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            {isEditing ? 'Cancel' : 'Edit Profile'}
+          </button>
         </div>
         <div className="profile-content">
           <div className="profile-avatar">
@@ -115,20 +163,82 @@ const ProfileModal = ({ profile, onClose }) => {
               </div>
             )}
           </div>
+          
+          {updateError && <div className="profile-update-error">{updateError}</div>}
+          
           <div className="profile-info">
-            <p><strong>Name:</strong> {profile.name}</p>
-            <p><strong>Email:</strong> {profile.email}</p>
-            <p><strong>Role:</strong> {profile.role || 'User'}</p>
+            <div className="profile-field">
+              <strong>Name:</strong>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="name"
+                  value={editedProfile.name}
+                  onChange={handleInputChange}
+                  className="profile-edit-input"
+                />
+              ) : (
+                <span>{profile.name}</span>
+              )}
+            </div>
+            
+            <div className="profile-field">
+              <strong>Email:</strong>
+              <span>{profile.email}</span>
+            </div>
+            
+            <div className="profile-field">
+              <strong>Role:</strong>
+              {isEditing ? (
+                <select
+                  name="role"
+                  value={editedProfile.role}
+                  onChange={handleInputChange}
+                  className="profile-edit-select"
+                >
+                  <option value="User">User</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Manager">Manager</option>
+                </select>
+              ) : (
+                <span>{profile.role || 'User'}</span>
+              )}
+            </div>
+            
             {profile.lastLogin && (
-              <p><strong>Last Login:</strong> {formatDate(profile.lastLogin)}</p>
+              <div className="profile-field">
+                <strong>Last Login:</strong>
+                <span>{formatDate(profile.lastLogin)}</span>
+              </div>
             )}
+            
             {profile.createdAt && (
-              <p><strong>Joined:</strong> {formatDate(profile.createdAt)}</p>
+              <div className="profile-field">
+                <strong>Joined:</strong>
+                <span>{formatDate(profile.createdAt)}</span>
+              </div>
             )}
+            
             {profile.stats && profile.stats.lastTaskCompletedAt && (
-              <p><strong>Last Completed:</strong> {formatDate(profile.stats.lastTaskCompletedAt)}</p>
+              <div className="profile-field">
+                <strong>Last Completed:</strong>
+                <span>{formatDate(profile.stats.lastTaskCompletedAt)}</span>
+              </div>
             )}
           </div>
+          
+          {isEditing && (
+            <div className="profile-actions">
+              <button 
+                className="save-profile-button"
+                onClick={handleSaveProfile}
+                disabled={updateLoading}
+              >
+                {updateLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+          
           <div className="profile-stats">
             {loading ? (
               <div className="stats-loading">Loading stats...</div>
