@@ -89,5 +89,35 @@ export const userService = {
       console.error('Error fetching users:', error);
       throw error;
     }
-  }
+  },
+
+  // Get user task statistics
+  getUserTaskStats: async (userId) => {
+    try {
+      // Reference to Firestore database
+      const db = getFirestore();
+      
+      // Get all tasks from Firestore
+      const tasksSnapshot = await getDocs(collection(db, 'tasks'));
+      const tasks = [];
+      
+      tasksSnapshot.forEach(doc => {
+        tasks.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Calculate statistics
+      const stats = {
+        created: tasks.filter(task => task.createdBy?.uid === userId).length,
+        assigned: tasks.filter(task => task.assignedUsers?.includes(userId)).length,
+        completed: tasks.filter(task => 
+          task.assignedUsers?.includes(userId) && task.status === 'Completed'
+        ).length
+      };
+      
+      return stats;
+    } catch (error) {
+      console.error('Error getting user task statistics:', error);
+      throw error;
+    }
+  },
 }; 

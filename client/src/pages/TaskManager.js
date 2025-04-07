@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/TaskManager.css';
 import { taskService } from '../services/taskService';
 import { userService } from '../services/userService';
+import ProfileModal from '../components/ProfileModal';
 
 const logComponentAction = (action, data = null) => {
   console.log(`%c[TaskManager] ${action}`, 'color: #9C27B0; font-weight: bold;');
@@ -14,7 +15,7 @@ const logComponentAction = (action, data = null) => {
 
 const TaskManager = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +34,8 @@ const TaskManager = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     logComponentAction('Component Mounted');
@@ -43,6 +46,12 @@ const TaskManager = () => {
   useEffect(() => {
     filterAndSortTasks();
   }, [searchTerm, statusFilter, sortBy, tasks]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
   const filterAndSortTasks = () => {
     let filtered = [...tasks];
@@ -108,6 +117,17 @@ const TaskManager = () => {
       setUsers(usersList);
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      console.log('Fetching user profile for:', user.uid);
+      const profile = await userService.getUserProfile(user.uid);
+      console.log('User profile fetched:', profile);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
     }
   };
 
@@ -312,6 +332,13 @@ const TaskManager = () => {
     }
   };
 
+  const handleProfileClick = () => {
+    console.log('Profile button clicked');
+    console.log('Current user profile state:', userProfile);
+    console.log('Current user state:', user);
+    setShowProfileModal(true);
+  };
+
   if (loading) {
     logComponentAction('Loading State');
     return <div className="loading">Loading...</div>;
@@ -364,6 +391,12 @@ const TaskManager = () => {
             }}
           >
             {showAddForm ? 'Cancel' : 'Add New Task'}
+          </button>
+          <button 
+            className="profile-button"
+            onClick={handleProfileClick}
+          >
+            <span className="button-icon">👤</span> Profile
           </button>
           <button 
             className="logout-button"
@@ -646,6 +679,17 @@ const TaskManager = () => {
           </div>
         ))}
       </div>
+
+      {/* Log whether the ProfileModal should be displayed */}
+      {console.log('Should show profile modal:', showProfileModal)}
+      {console.log('User profile data available:', userProfile)}
+      
+      {showProfileModal && (
+        <ProfileModal 
+          profile={userProfile} 
+          onClose={() => setShowProfileModal(false)} 
+        />
+      )}
     </div>
   );
 };
