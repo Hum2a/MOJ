@@ -45,6 +45,13 @@ const LandingPage = () => {
   return (
     <div className="landing-container">
       <header className="landing-header">
+        <div className="logo-container">
+          <img 
+            src="/Ministry_of_Justice_logo.svg_.png" 
+            alt="Ministry of Justice" 
+            className="moj-logo" 
+          />
+        </div>
         <h1 className="landing-title">HMCTS Task Manager</h1>
         <p className="landing-subtitle">
           Streamline your casework with our efficient task management system designed specifically for HMCTS caseworkers.
