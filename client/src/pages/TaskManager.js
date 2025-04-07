@@ -387,9 +387,11 @@ const TaskManager = () => {
         return;
       }
 
+      // Send the original date string instead of the ISO string
       const task = await taskService.createTask({
         ...newTask,
-        dueDate: dueDate.toISOString()
+        // Don't convert to ISO string, server expects YYYY-MM-DD format
+        dueDate: newTask.dueDate
       });
       
       logComponentAction('Task Created', task);
