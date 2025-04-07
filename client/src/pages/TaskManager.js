@@ -347,7 +347,14 @@ const TaskManager = () => {
   return (
     <div className="task-manager-container">
       <header className="task-manager-header">
-        <h1 className="task-manager-title">Task Manager</h1>
+        <div className="header-left">
+          <h1 className="task-manager-title">Task Manager</h1>
+          {user && (
+            <div className="welcome-message">
+              Welcome back, {user.name || user.email.split('@')[0]}!
+            </div>
+          )}
+        </div>
         <div className="header-actions">
           <div className="search-container">
             <input

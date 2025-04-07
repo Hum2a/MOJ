@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { userService } from '../services/userService';
 
 const AuthContext = createContext(null);
 
@@ -13,11 +14,17 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       try {
         await authService.init();
-        const token = authService.getToken();
-        if (token) {
+        
+        // Check for redirect result (for Google sign-in)
+        const redirectResult = await authService.getRedirectResult();
+        if (redirectResult && redirectResult.user) {
+          await handleUserSignIn(redirectResult.user);
+        } else {
           // Get user data if token exists
-          const userData = await authService.getCurrentUser();
-          setUser(userData);
+          const userData = authService.getCurrentUser();
+          if (userData) {
+            setUser(userData);
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -29,6 +36,19 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // Helper function to handle user sign-in and profile creation
+  const handleUserSignIn = async (userData) => {
+    try {
+      // Create or update user profile in Firestore
+      await userService.createUserProfile(userData);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Error handling user sign in:', error);
+      throw error;
+    }
+  };
+
   const login = async (email, password) => {
     try {
       setError(null);
@@ -38,10 +58,22 @@ export const AuthProvider = ({ children }) => {
         return { requiresMFA: true, tempToken: response.tempToken };
       }
       
-      setUser(response.user);
+      await handleUserSignIn(response.user);
       return { success: true, user: response.user };
     } catch (error) {
       setError(error.message || 'Failed to login');
+      throw error;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      setError(null);
+      const response = await authService.loginWithGoogle();
+      await handleUserSignIn(response.user);
+      return { success: true, user: response.user };
+    } catch (error) {
+      setError(error.message || 'Failed to login with Google');
       throw error;
     }
   };
@@ -50,7 +82,8 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await authService.register(userData);
-      return { success: true, ...response };
+      await handleUserSignIn(response.user);
+      return { success: true, user: response.user };
     } catch (error) {
       setError(error.message || 'Failed to register');
       throw error;
@@ -61,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await authService.verifyMFA(tempToken, mfaCode);
-      setUser(response.user);
+      await handleUserSignIn(response.user);
       return { success: true };
     } catch (error) {
       setError(error.message || 'Failed to verify MFA');
@@ -83,6 +116,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
+    loginWithGoogle,
     logout,
     verifyMFA,
     register

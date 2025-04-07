@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { userService } from '../../services/userService';
 
 const Register = ({ onCancel, onRegistrationSuccess }) => {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   
   const [registerData, setRegisterData] = useState({
     email: '',
@@ -73,6 +73,28 @@ const Register = ({ onCancel, onRegistrationSuccess }) => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      setRegisterError('');
+      setLoading(true);
+
+      // Use Google authentication
+      const response = await loginWithGoogle();
+      
+      if (response.success) {
+        // If registration was successful, notify parent component
+        onRegistrationSuccess({
+          email: response.user.email
+        });
+      }
+    } catch (error) {
+      console.error('Google sign up error:', error);
+      setRegisterError(error.message || 'Failed to sign up with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-form register-form">
       <h2>Create Account</h2>
@@ -135,6 +157,21 @@ const Register = ({ onCancel, onRegistrationSuccess }) => {
           </button>
         </div>
       </form>
+
+      <div className="social-login">
+        <div className="divider">
+          <span>OR</span>
+        </div>
+        <button 
+          type="button"
+          className="google-button"
+          onClick={handleGoogleSignUp}
+          disabled={loading}
+        >
+          <span className="google-icon">G</span>
+          Sign up with Google
+        </button>
+      </div>
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { userService } from '../../services/userService';
 const Login = ({ onCancel, onSwitchToRegister }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -55,6 +55,25 @@ const Login = ({ onCancel, onSwitchToRegister }) => {
     } catch (error) {
       console.error('Login error:', error);
       setLoginError(error.message || 'Failed to login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoginError('');
+      setLoading(true);
+      
+      const response = await loginWithGoogle();
+      
+      if (response.success) {
+        const from = location.state?.from?.pathname || '/tasks';
+        navigate(from);
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setLoginError(error.message || 'Failed to login with Google');
     } finally {
       setLoading(false);
     }
@@ -166,6 +185,22 @@ const Login = ({ onCancel, onSwitchToRegister }) => {
           </button>
         </div>
       </form>
+      
+      <div className="social-login">
+        <div className="divider">
+          <span>OR</span>
+        </div>
+        <button 
+          type="button"
+          className="google-button"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          <span className="google-icon">G</span>
+          Continue with Google
+        </button>
+      </div>
+      
       <div className="auth-switch">
         <p>Don't have an account?</p>
         <button 
