@@ -16,7 +16,13 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://hmcts.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours in seconds
+}));
 app.use(express.json());
 
 // Authentication middleware

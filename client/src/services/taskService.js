@@ -1,6 +1,9 @@
 import { getAuth } from 'firebase/auth';
 
-const API_URL = 'http://localhost:5000/api';
+// Use the production backend URL if in production, otherwise use localhost
+const API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://moj-ifz0.onrender.com/api'
+  : 'http://localhost:5000/api';
 
 const logRequest = (method, endpoint, data = null) => {
   console.log(`%c[API Request] ${method} ${endpoint}`, 'color: #2196F3; font-weight: bold;');
