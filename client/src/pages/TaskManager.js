@@ -19,8 +19,10 @@ const TaskManager = () => {
     title: '',
     description: '',
     status: 'Pending',
-    dueDate: ''
+    dueDate: '',
+    dueTime: ''
   });
+  const [editingTask, setEditingTask] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -141,7 +143,8 @@ const TaskManager = () => {
         title: '',
         description: '',
         status: 'Pending',
-        dueDate: ''
+        dueDate: '',
+        dueTime: ''
       });
       setShowAddForm(false);
     } catch (error) {
@@ -195,6 +198,91 @@ const TaskManager = () => {
   const handleSortChange = (e) => {
     setSortBy(e.target.value);
     logComponentAction('Sort Changed', e.target.value);
+  };
+
+  const handleEditClick = (task) => {
+    logComponentAction('Edit Task Clicked', task);
+    const date = new Date(task.dueDate);
+    
+    // Format the date and time for the form inputs
+    const formattedDate = date.toISOString().split('T')[0];
+    const formattedTime = task.hasTime ? 
+      `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : 
+      '';
+
+    setEditingTask({
+      ...task,
+      dueDate: formattedDate,
+      dueTime: formattedTime
+    });
+  };
+
+  const handleEditCancel = () => {
+    logComponentAction('Edit Cancelled');
+    setEditingTask(null);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    logComponentAction('Submitting Edit', editingTask);
+
+    if (!editingTask.title.trim()) {
+      setError('Title is required');
+      return;
+    }
+
+    if (!editingTask.dueDate) {
+      setError('Due date is required');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Create a copy of the task data without the dueTime field
+      const { dueTime, ...taskDataWithoutTime } = editingTask;
+      
+      // Send the task data with dueTime as a separate field
+      const updatedTask = await taskService.updateTask(editingTask.id, {
+        ...taskDataWithoutTime,
+        dueTime: editingTask.dueTime || null
+      });
+
+      logComponentAction('Task Updated', updatedTask);
+      setTasks(tasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      ));
+      setEditingTask(null);
+    } catch (error) {
+      setError('Failed to update task. Please try again.');
+      console.error('Error updating task:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    logComponentAction('Edit Input Changed', { name, value });
+    setEditingTask(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const formatDueDate = (dueDate, hasTime) => {
+    const date = new Date(dueDate);
+    if (hasTime) {
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    return date.toLocaleDateString();
   };
 
   if (loading) {
@@ -284,16 +372,28 @@ const TaskManager = () => {
               onChange={handleInputChange}
             />
           </div>
-          <div className="form-group">
-            <label htmlFor="dueDate">Due Date</label>
-            <input
-              type="date"
-              id="dueDate"
-              name="dueDate"
-              value={newTask.dueDate}
-              onChange={handleInputChange}
-              required
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="dueDate">Due Date</label>
+              <input
+                type="date"
+                id="dueDate"
+                name="dueDate"
+                value={newTask.dueDate}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="dueTime">Due Time (optional)</label>
+              <input
+                type="time"
+                id="dueTime"
+                name="dueTime"
+                value={newTask.dueTime}
+                onChange={handleInputChange}
+              />
+            </div>
           </div>
           <div className="form-group">
             <label htmlFor="status">Status</label>
@@ -314,6 +414,80 @@ const TaskManager = () => {
         </form>
       )}
 
+      {editingTask && (
+        <form className="task-form edit-form" onSubmit={handleEditSubmit}>
+          <h2>Edit Task</h2>
+          <div className="form-group">
+            <label htmlFor="edit-title">Title</label>
+            <input
+              type="text"
+              id="edit-title"
+              name="title"
+              value={editingTask.title}
+              onChange={handleEditInputChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="edit-description">Description</label>
+            <textarea
+              id="edit-description"
+              name="description"
+              value={editingTask.description}
+              onChange={handleEditInputChange}
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="edit-dueDate">Due Date</label>
+              <input
+                type="date"
+                id="edit-dueDate"
+                name="dueDate"
+                value={editingTask.dueDate}
+                onChange={handleEditInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="edit-dueTime">Due Time (optional)</label>
+              <input
+                type="time"
+                id="edit-dueTime"
+                name="dueTime"
+                value={editingTask.dueTime || ''}
+                onChange={handleEditInputChange}
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="edit-status">Status</label>
+            <select
+              id="edit-status"
+              name="status"
+              value={editingTask.status}
+              onChange={handleEditInputChange}
+            >
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="submit-button">
+              Update Task
+            </button>
+            <button 
+              type="button" 
+              className="cancel-button"
+              onClick={handleEditCancel}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
       <div className="task-grid">
         {filteredTasks.map(task => (
           <div 
@@ -324,9 +498,19 @@ const TaskManager = () => {
             <span className="task-id">ID: {task.id}</span>
             <h3 className="task-title">{task.title}</h3>
             <p className="task-description">{task.description}</p>
-            <p className="task-due-date">
-              Due: {new Date(task.dueDate).toLocaleDateString()}
-            </p>
+            <div className="task-metadata">
+              <p className="task-due-date">
+                Due: {formatDueDate(task.dueDate, task.hasTime)}
+              </p>
+              <p className="task-issuer">
+                Created by: {task.createdBy?.name || task.createdBy?.email || 'Unknown'}
+              </p>
+              {task.lastUpdatedBy && (
+                <p className="task-last-updated">
+                  Last updated by: {task.lastUpdatedBy.name || task.lastUpdatedBy.email}
+                </p>
+              )}
+            </div>
             <select
               className="task-status"
               value={task.status}
@@ -336,12 +520,20 @@ const TaskManager = () => {
               <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
             </select>
-            <button
-              className="delete-button"
-              onClick={() => handleDeleteTask(task.id)}
-            >
-              Delete Task
-            </button>
+            <div className="task-actions">
+              <button
+                className="edit-button"
+                onClick={() => handleEditClick(task)}
+              >
+                Edit Task
+              </button>
+              <button
+                className="delete-button"
+                onClick={() => handleDeleteTask(task.id)}
+              >
+                Delete Task
+              </button>
+            </div>
           </div>
         ))}
       </div>

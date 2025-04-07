@@ -19,30 +19,75 @@ const db = admin.firestore();
 app.use(cors());
 app.use(express.json());
 
+// Authentication middleware
+const authenticateUser = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Helper function to create ISO date string
+const createISODate = (date, time = null) => {
+    try {
+        if (!time) {
+            // If no time provided, set to start of the day
+            return new Date(`${date}T00:00:00`).toISOString();
+        }
+        // Combine date and time
+        return new Date(`${date}T${time}`).toISOString();
+    } catch (error) {
+        throw new Error('Invalid date or time format');
+    }
+};
+
 // API Routes
 
 // Create a task
-app.post('/api/tasks', async (req, res) => {
+app.post('/api/tasks', authenticateUser, async (req, res) => {
     try {
-        const { title, description, status, dueDate } = req.body;
+        const { title, description, status, dueDate, dueTime } = req.body;
         
         if (!title || !dueDate) {
             return res.status(400).json({ error: 'Title and due date are required' });
         }
 
-        const taskData = {
-            title,
-            description: description || '',
-            status: status || 'Pending',
-            dueDate: new Date(dueDate).toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
+        try {
+            // Create ISO date string
+            const dueDateISO = createISODate(dueDate, dueTime);
 
-        const taskRef = await db.collection('tasks').add(taskData);
-        const task = { id: taskRef.id, ...taskData };
-        
-        res.status(201).json(task);
+            const taskData = {
+                title,
+                description: description || '',
+                status: status || 'Pending',
+                dueDate: dueDateISO,
+                hasTime: !!dueTime,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                createdBy: {
+                    uid: req.user.uid,
+                    email: req.user.email,
+                    name: req.user.name || req.user.email
+                }
+            };
+
+            const taskRef = await db.collection('tasks').add(taskData);
+            const task = { id: taskRef.id, ...taskData };
+            
+            res.status(201).json(task);
+        } catch (dateError) {
+            return res.status(400).json({ error: 'Invalid date or time format' });
+        }
     } catch (error) {
         console.error('Error creating task:', error);
         res.status(500).json({ error: 'Failed to create task' });
@@ -50,7 +95,7 @@ app.post('/api/tasks', async (req, res) => {
 });
 
 // Get all tasks
-app.get('/api/tasks', async (req, res) => {
+app.get('/api/tasks', authenticateUser, async (req, res) => {
     try {
         const tasksSnapshot = await db.collection('tasks')
             .orderBy('createdAt', 'desc')
@@ -69,7 +114,7 @@ app.get('/api/tasks', async (req, res) => {
 });
 
 // Get a single task by ID
-app.get('/api/tasks/:id', async (req, res) => {
+app.get('/api/tasks/:id', authenticateUser, async (req, res) => {
     try {
         const taskDoc = await db.collection('tasks').doc(req.params.id).get();
         
@@ -85,7 +130,7 @@ app.get('/api/tasks/:id', async (req, res) => {
 });
 
 // Update task status
-app.patch('/api/tasks/:id/status', async (req, res) => {
+app.patch('/api/tasks/:id/status', authenticateUser, async (req, res) => {
     try {
         const { status } = req.body;
         if (!status || !['Pending', 'In Progress', 'Completed'].includes(status)) {
@@ -101,7 +146,12 @@ app.patch('/api/tasks/:id/status', async (req, res) => {
 
         await taskRef.update({
             status,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            lastUpdatedBy: {
+                uid: req.user.uid,
+                email: req.user.email,
+                name: req.user.name || req.user.email
+            }
         });
 
         const updatedTask = await taskRef.get();
@@ -113,7 +163,7 @@ app.patch('/api/tasks/:id/status', async (req, res) => {
 });
 
 // Delete a task
-app.delete('/api/tasks/:id', async (req, res) => {
+app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
     try {
         const taskRef = db.collection('tasks').doc(req.params.id);
         const taskDoc = await taskRef.get();
@@ -127,6 +177,53 @@ app.delete('/api/tasks/:id', async (req, res) => {
     } catch (error) {
         console.error('Error deleting task:', error);
         res.status(500).json({ error: 'Failed to delete task' });
+    }
+});
+
+// Update a task
+app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
+    try {
+        const { title, description, status, dueDate, dueTime } = req.body;
+        
+        if (!title || !dueDate) {
+            return res.status(400).json({ error: 'Title and due date are required' });
+        }
+
+        const taskRef = db.collection('tasks').doc(req.params.id);
+        const taskDoc = await taskRef.get();
+
+        if (!taskDoc.exists) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        try {
+            // Create ISO date string
+            const dueDateISO = createISODate(dueDate, dueTime);
+
+            const taskData = {
+                title,
+                description: description || '',
+                status: status || 'Pending',
+                dueDate: dueDateISO,
+                hasTime: !!dueTime,
+                updatedAt: new Date().toISOString(),
+                lastUpdatedBy: {
+                    uid: req.user.uid,
+                    email: req.user.email,
+                    name: req.user.name || req.user.email
+                }
+            };
+
+            await taskRef.update(taskData);
+            
+            const updatedTaskDoc = await taskRef.get();
+            res.json({ id: updatedTaskDoc.id, ...updatedTaskDoc.data() });
+        } catch (dateError) {
+            return res.status(400).json({ error: 'Invalid date or time format' });
+        }
+    } catch (error) {
+        console.error('Error updating task:', error);
+        res.status(500).json({ error: 'Failed to update task' });
     }
 });
 

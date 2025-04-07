@@ -1,3 +1,5 @@
+import { getAuth } from 'firebase/auth';
+
 const API_URL = 'http://localhost:5000/api';
 
 const logRequest = (method, endpoint, data = null) => {
@@ -15,13 +17,38 @@ const logError = (method, endpoint, error) => {
   console.error(`%c[API Error] ${method} ${endpoint}`, 'color: #F44336; font-weight: bold;', error);
 };
 
+// Helper function to get the current user's token
+const getAuthToken = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  return await user.getIdToken();
+};
+
+// Helper function to create headers with auth token
+const createHeaders = async (contentType = true) => {
+  const token = await getAuthToken();
+  const headers = {
+    'Authorization': `Bearer ${token}`
+  };
+  if (contentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+};
+
 export const taskService = {
   // Get all tasks
   getAllTasks: async () => {
     const endpoint = '/tasks';
     logRequest('GET', endpoint);
     try {
-      const response = await fetch(`${API_URL}${endpoint}`);
+      const headers = await createHeaders(false);
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -39,7 +66,10 @@ export const taskService = {
     const endpoint = `/tasks/${id}`;
     logRequest('GET', endpoint);
     try {
-      const response = await fetch(`${API_URL}${endpoint}`);
+      const headers = await createHeaders(false);
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -57,11 +87,10 @@ export const taskService = {
     const endpoint = '/tasks';
     logRequest('POST', endpoint, taskData);
     try {
+      const headers = await createHeaders();
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(taskData),
       });
       if (!response.ok) {
@@ -82,11 +111,10 @@ export const taskService = {
     const data = { status };
     logRequest('PATCH', endpoint, data);
     try {
+      const headers = await createHeaders();
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -106,8 +134,10 @@ export const taskService = {
     const endpoint = `/tasks/${id}`;
     logRequest('DELETE', endpoint);
     try {
+      const headers = await createHeaders();
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'DELETE',
+        headers
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -117,6 +147,29 @@ export const taskService = {
       return data;
     } catch (error) {
       logError('DELETE', endpoint, error);
+      throw error;
+    }
+  },
+
+  // Update a task
+  updateTask: async (id, taskData) => {
+    const endpoint = `/tasks/${id}`;
+    logRequest('PUT', endpoint, taskData);
+    try {
+      const headers = await createHeaders();
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(taskData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      logResponse('PUT', endpoint, data);
+      return data;
+    } catch (error) {
+      logError('PUT', endpoint, error);
       throw error;
     }
   },
