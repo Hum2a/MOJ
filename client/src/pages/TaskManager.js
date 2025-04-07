@@ -508,6 +508,12 @@ const TaskManager = () => {
       setLoading(true);
       setError(null);
 
+      // Log detailed information about what we're sending
+      console.log('Task update - DETAILED DATA LOG:');
+      console.log('Raw dueDate from form:', editingTask.dueDate);
+      console.log('dueDate validity:', !isNaN(new Date(editingTask.dueDate).getTime()));
+      console.log('dueTime from form:', editingTask.dueTime);
+
       // Create a copy of the task data without the dueTime field
       const { dueTime, ...taskDataWithoutTime } = editingTask;
       
