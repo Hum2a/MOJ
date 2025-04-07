@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../styles/TaskManager.css';
 import { taskService } from '../services/taskService';
 
@@ -10,6 +12,8 @@ const logComponentAction = (action, data = null) => {
 };
 
 const TaskManager = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -285,6 +289,15 @@ const TaskManager = () => {
     return date.toLocaleDateString();
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (loading) {
     logComponentAction('Loading State');
     return <div className="loading">Loading...</div>;
@@ -337,6 +350,12 @@ const TaskManager = () => {
             }}
           >
             {showAddForm ? 'Cancel' : 'Add New Task'}
+          </button>
+          <button 
+            className="logout-button"
+            onClick={handleLogout}
+          >
+            Logout
           </button>
         </div>
       </header>
