@@ -96,9 +96,20 @@ export const taskService = {
         headers,
         body: JSON.stringify(taskData),
       });
+      
+      // Add more detailed error logging to get the response body
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to read the response body for more details
+        try {
+          const errorData = await response.json();
+          console.error('Server error response:', errorData);
+          throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error || 'Unknown error'}`);
+        } catch (jsonError) {
+          // If can't parse JSON, just throw the standard error
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
+      
       const data = await response.json();
       logResponse('POST', endpoint, data);
       return data;

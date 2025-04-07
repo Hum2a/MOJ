@@ -387,6 +387,16 @@ const TaskManager = () => {
         return;
       }
 
+      // Log detailed information about what we're sending
+      console.log('Task creation - DETAILED DATA LOG:');
+      console.log('Raw dueDate from form:', newTask.dueDate);
+      console.log('dueDate validity:', !isNaN(new Date(newTask.dueDate).getTime()));
+      console.log('dueTime from form:', newTask.dueTime);
+      console.log('Full request payload:', {
+        ...newTask,
+        dueDate: newTask.dueDate
+      });
+
       // Send the original date string instead of the ISO string
       const task = await taskService.createTask({
         ...newTask,
