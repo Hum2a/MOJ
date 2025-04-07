@@ -6,11 +6,39 @@ require('dotenv').config();
 const app = express();
 
 // Initialize Firebase Admin
-const serviceAccount = require('./ministryofjustice-c0344-firebase-adminsdk-fbsvc-29d8f0a066.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://ministryofjustice-c0344.firebaseio.com"
-});
+// Check if running in production (like on Render)
+let firebaseConfig;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // On production, use environment variable
+  try {
+    const serviceAccountJson = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    firebaseConfig = {
+      credential: admin.credential.cert(serviceAccountJson),
+      databaseURL: process.env.FIREBASE_DATABASE_URL || "https://ministryofjustice-c0344.firebaseio.com"
+    };
+    console.log('Using Firebase credentials from environment variable');
+  } catch (error) {
+    console.error('Error parsing Firebase service account from environment variable:', error);
+    process.exit(1);
+  }
+} else {
+  // In development, try to use the local file
+  try {
+    const serviceAccount = require('./ministryofjustice-c0344-firebase-adminsdk-fbsvc-29d8f0a066.json');
+    firebaseConfig = {
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: process.env.FIREBASE_DATABASE_URL || "https://ministryofjustice-c0344.firebaseio.com"
+    };
+    console.log('Using Firebase credentials from local file');
+  } catch (error) {
+    console.error('Error loading Firebase service account from local file:', error);
+    process.exit(1);
+  }
+}
+
+// Initialize Firebase with the appropriate config
+admin.initializeApp(firebaseConfig);
 
 // Get Firestore instance
 const db = admin.firestore();
