@@ -1,70 +1,80 @@
-# Getting Started with Create React App
+# HMCTS Task Manager Client
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend React application for the HMCTS Task Manager.
 
-## Available Scripts
+## Deployment to Render
 
-In the project directory, you can run:
+### Prerequisites
 
-### `npm start`
+- A [Render](https://render.com) account
+- Firebase project with Authentication enabled (same as used for the backend)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Deploying to Render
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. Create a new Static Site in Render:
+   - Go to your Render dashboard
+   - Click **New** and select **Static Site**
+   - Connect your GitHub repository
 
-### `npm test`
+2. Configure the site:
+   - **Name**: Choose a name (e.g., "hmcts-task-manager")
+   - **Branch**: Select your main branch
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `build`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3. Add environment variables:
+   - `REACT_APP_FIREBASE_API_KEY`: Your Firebase API key
+   - `REACT_APP_FIREBASE_AUTH_DOMAIN`: Your Firebase auth domain
+   - `REACT_APP_FIREBASE_PROJECT_ID`: Your Firebase project ID
+   - `REACT_APP_FIREBASE_STORAGE_BUCKET`: Your Firebase storage bucket
+   - `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`: Your Firebase messaging sender ID
+   - `REACT_APP_FIREBASE_APP_ID`: Your Firebase app ID
+   - `REACT_APP_FIREBASE_MEASUREMENT_ID`: Your Firebase measurement ID
 
-### `npm run build`
+4. Click **Create Static Site**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Connecting to the Backend API
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The application is configured to automatically connect to:
+- `http://localhost:5000/api` in development
+- `https://moj-ifz0.onrender.com/api` in production
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+If you deploy the backend to a different URL, update the API URL in `src/services/taskService.js`.
 
-### `npm run eject`
+## Local Development
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Create a `.env` file with your Firebase configuration:
+   ```
+   REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+   REACT_APP_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+   REACT_APP_FIREBASE_PROJECT_ID=your_firebase_project_id
+   REACT_APP_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+   REACT_APP_FIREBASE_APP_ID=your_firebase_app_id
+   REACT_APP_FIREBASE_MEASUREMENT_ID=your_firebase_measurement_id
+   ```
+4. Start the development server:
+   ```
+   npm start
+   ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Features
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- User authentication (login, registration, password reset)
+- Task management (create, read, update, delete)
+- Task assignment to users
+- Task filtering and sorting
+- Responsive design
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Technologies
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- React.js
+- Firebase Authentication
+- Firebase Firestore (via backend API)
+- React Router
+- CSS Modules
