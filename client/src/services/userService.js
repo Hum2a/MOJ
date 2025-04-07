@@ -1,4 +1,4 @@
-import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, updateDoc, getDoc, collection, getDocs, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { app } from '../firebase/firebase';
 
 const db = getFirestore(app);
@@ -19,7 +19,13 @@ export const userService = {
           role: additionalData.role || 'user',
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          stats: additionalData.stats || {
+            tasksCreated: 0,
+            tasksAssigned: 0,
+            tasksCompleted: 0,
+            lastTaskCompletedAt: null
+          }
         };
 
         await setDoc(userRef, userData);
@@ -94,10 +100,20 @@ export const userService = {
   // Get user task statistics
   getUserTaskStats: async (userId) => {
     try {
-      // Reference to Firestore database
-      const db = getFirestore();
+      // First try to get stats directly from user profile
+      const userRef = doc(db, 'users', userId);
+      const userSnapshot = await getDoc(userRef);
       
-      // Get all tasks from Firestore
+      if (userSnapshot.exists() && userSnapshot.data().stats) {
+        const userStats = userSnapshot.data().stats;
+        return {
+          created: userStats.tasksCreated || 0,
+          assigned: userStats.tasksAssigned || 0,
+          completed: userStats.tasksCompleted || 0
+        };
+      }
+      
+      // If stats not available in profile, calculate them
       const tasksSnapshot = await getDocs(collection(db, 'tasks'));
       const tasks = [];
       
@@ -120,4 +136,77 @@ export const userService = {
       throw error;
     }
   },
+
+  // Update stats when a task is created
+  incrementTaskCreated: async (userId) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        'stats.tasksCreated': increment(1),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating task created stats:', error);
+    }
+  },
+
+  // Update stats when a task is assigned to a user
+  incrementTaskAssigned: async (userId) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        'stats.tasksAssigned': increment(1),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating task assigned stats:', error);
+    }
+  },
+
+  // Update stats when a task is completed
+  incrementTaskCompleted: async (userId) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        'stats.tasksCompleted': increment(1),
+        'stats.lastTaskCompletedAt': new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating task completed stats:', error);
+    }
+  },
+
+  // Update user stats for all assigned users when a task status changes
+  updateTaskStatusStats: async (task, previousStatus, newStatus) => {
+    // Only proceed if we have assigned users
+    if (!task.assignedUsers || task.assignedUsers.length === 0) {
+      return;
+    }
+
+    // If task becomes complete, increment completed count for all assigned users
+    if (newStatus === 'Completed' && previousStatus !== 'Completed') {
+      for (const userId of task.assignedUsers) {
+        await userService.incrementTaskCompleted(userId);
+      }
+    }
+    // If task was completed but is now not completed, decrement the count
+    else if (previousStatus === 'Completed' && newStatus !== 'Completed') {
+      for (const userId of task.assignedUsers) {
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists() && userDoc.data().stats && userDoc.data().stats.tasksCompleted > 0) {
+            await updateDoc(userRef, {
+              'stats.tasksCompleted': increment(-1),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        } catch (error) {
+          console.error(`Error updating task completed stats for user ${userId}:`, error);
+        }
+      }
+    }
+  }
 }; 

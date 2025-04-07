@@ -34,16 +34,32 @@ const ProfileModal = ({ profile, onClose }) => {
     };
   }, []);
 
-  // Fetch user statistics
+  // Fetch or extract user statistics
   useEffect(() => {
-    const fetchStats = async () => {
-      if (profile && profile.uid) {
-        console.log('Fetching stats for profile:', profile.uid);
+    const getStats = async () => {
+      if (profile) {
         try {
           setLoading(true);
-          const userStats = await userService.getUserTaskStats(profile.uid);
-          console.log('Stats fetched:', userStats);
-          setStats(userStats);
+          
+          // If profile already has stats, use those directly
+          if (profile.stats) {
+            console.log('Using stats from profile:', profile.stats);
+            setStats({
+              created: profile.stats.tasksCreated || 0,
+              assigned: profile.stats.tasksAssigned || 0,
+              completed: profile.stats.tasksCompleted || 0
+            });
+            setLoading(false);
+            return;
+          }
+          
+          // Otherwise fetch stats from API
+          if (profile.uid) {
+            console.log('Fetching stats for profile:', profile.uid);
+            const userStats = await userService.getUserTaskStats(profile.uid);
+            console.log('Stats fetched:', userStats);
+            setStats(userStats);
+          }
         } catch (error) {
           console.error('Error fetching user stats:', error);
         } finally {
@@ -52,7 +68,7 @@ const ProfileModal = ({ profile, onClose }) => {
       }
     };
 
-    fetchStats();
+    getStats();
   }, [profile]);
 
   // Handle smooth closing animation
@@ -68,6 +84,12 @@ const ProfileModal = ({ profile, onClose }) => {
     console.log('No profile provided, returning null');
     return null;
   }
+  
+  // Format date helper
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString();
+  };
   
   return (
     <div 
@@ -98,10 +120,13 @@ const ProfileModal = ({ profile, onClose }) => {
             <p><strong>Email:</strong> {profile.email}</p>
             <p><strong>Role:</strong> {profile.role || 'User'}</p>
             {profile.lastLogin && (
-              <p><strong>Last Login:</strong> {new Date(profile.lastLogin).toLocaleString()}</p>
+              <p><strong>Last Login:</strong> {formatDate(profile.lastLogin)}</p>
             )}
             {profile.createdAt && (
-              <p><strong>Joined:</strong> {new Date(profile.createdAt).toLocaleDateString()}</p>
+              <p><strong>Joined:</strong> {formatDate(profile.createdAt)}</p>
+            )}
+            {profile.stats && profile.stats.lastTaskCompletedAt && (
+              <p><strong>Last Completed:</strong> {formatDate(profile.stats.lastTaskCompletedAt)}</p>
             )}
           </div>
           <div className="profile-stats">

@@ -48,10 +48,16 @@ const Register = ({ onCancel, onRegistrationSuccess }) => {
         name: registerData.name
       });
 
-      // Create user profile in Firestore
+      // Create user profile in Firestore with initial stats
       await userService.createUserProfile(user, {
         name: registerData.name,
-        role: 'user' // Default role for new users
+        role: 'user', // Default role for new users
+        stats: {
+          tasksCreated: 0,
+          tasksAssigned: 0,
+          tasksCompleted: 0,
+          lastTaskCompletedAt: null
+        }
       });
       
       // After successful registration, pass the data back to parent

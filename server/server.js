@@ -51,12 +51,55 @@ const createISODate = (date, time = null) => {
     }
 };
 
+// Helper function to update user stats
+const updateUserStats = async (userId, statType) => {
+    try {
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) return;
+        
+        const userData = userDoc.data();
+        const stats = userData.stats || {
+            tasksCreated: 0,
+            tasksAssigned: 0,
+            tasksCompleted: 0,
+            lastTaskCompletedAt: null
+        };
+        
+        const updateData = { stats: { ...stats } };
+        
+        switch (statType) {
+            case 'created':
+                updateData.stats.tasksCreated = (stats.tasksCreated || 0) + 1;
+                break;
+            case 'assigned':
+                updateData.stats.tasksAssigned = (stats.tasksAssigned || 0) + 1;
+                break;
+            case 'completed':
+                updateData.stats.tasksCompleted = (stats.tasksCompleted || 0) + 1;
+                updateData.stats.lastTaskCompletedAt = new Date().toISOString();
+                break;
+            case 'uncompleted':
+                if (stats.tasksCompleted > 0) {
+                    updateData.stats.tasksCompleted = stats.tasksCompleted - 1;
+                }
+                break;
+        }
+        
+        updateData.updatedAt = new Date().toISOString();
+        await userRef.update(updateData);
+    } catch (error) {
+        console.error(`Error updating stats for user ${userId}:`, error);
+    }
+};
+
 // API Routes
 
 // Create a task
 app.post('/api/tasks', authenticateUser, async (req, res) => {
     try {
-        const { title, description, status, dueDate, dueTime } = req.body;
+        const { title, description, status, dueDate, dueTime, assignedUsers } = req.body;
         
         if (!title || !dueDate) {
             return res.status(400).json({ error: 'Title and due date are required' });
@@ -74,6 +117,7 @@ app.post('/api/tasks', authenticateUser, async (req, res) => {
                 hasTime: !!dueTime,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                assignedUsers: assignedUsers || [],
                 createdBy: {
                     uid: req.user.uid,
                     email: req.user.email,
@@ -83,6 +127,16 @@ app.post('/api/tasks', authenticateUser, async (req, res) => {
 
             const taskRef = await db.collection('tasks').add(taskData);
             const task = { id: taskRef.id, ...taskData };
+            
+            // Update creator's stats
+            await updateUserStats(req.user.uid, 'created');
+            
+            // Update assignees' stats
+            if (assignedUsers && assignedUsers.length > 0) {
+                for (const userId of assignedUsers) {
+                    await updateUserStats(userId, 'assigned');
+                }
+            }
             
             res.status(201).json(task);
         } catch (dateError) {
@@ -143,6 +197,26 @@ app.patch('/api/tasks/:id/status', authenticateUser, async (req, res) => {
         if (!taskDoc.exists) {
             return res.status(404).json({ error: 'Task not found' });
         }
+        
+        const currentTask = taskDoc.data();
+        const previousStatus = currentTask.status;
+
+        // Only update user stats if status is changing
+        if (previousStatus !== status) {
+            // Check if task has assigned users
+            if (currentTask.assignedUsers && currentTask.assignedUsers.length > 0) {
+                for (const userId of currentTask.assignedUsers) {
+                    // If new status is completed, increment completed count
+                    if (status === 'Completed' && previousStatus !== 'Completed') {
+                        await updateUserStats(userId, 'completed');
+                    }
+                    // If task was completed but now is not, decrement completed count
+                    else if (previousStatus === 'Completed' && status !== 'Completed') {
+                        await updateUserStats(userId, 'uncompleted');
+                    }
+                }
+            }
+        }
 
         await taskRef.update({
             status,
@@ -183,7 +257,7 @@ app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
 // Update a task
 app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
     try {
-        const { title, description, status, dueDate, dueTime } = req.body;
+        const { title, description, status, dueDate, dueTime, assignedUsers } = req.body;
         
         if (!title || !dueDate) {
             return res.status(400).json({ error: 'Title and due date are required' });
@@ -194,6 +268,40 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
 
         if (!taskDoc.exists) {
             return res.status(404).json({ error: 'Task not found' });
+        }
+        
+        const currentTask = taskDoc.data();
+        const previousStatus = currentTask.status;
+        const previousAssignedUsers = currentTask.assignedUsers || [];
+        
+        // Determine new users to add and existing users to remove
+        const newAssignedUsers = assignedUsers || [];
+        const usersToAdd = newAssignedUsers.filter(uid => !previousAssignedUsers.includes(uid));
+        
+        // Handle status change stats updates
+        if (previousStatus !== status) {
+            // Check if task has assigned users
+            if (newAssignedUsers.length > 0) {
+                for (const userId of newAssignedUsers) {
+                    // If new status is completed, increment completed count
+                    if (status === 'Completed' && previousStatus !== 'Completed') {
+                        await updateUserStats(userId, 'completed');
+                    }
+                    // If task was completed but now is not, decrement completed count
+                    else if (previousStatus === 'Completed' && status !== 'Completed') {
+                        await updateUserStats(userId, 'uncompleted');
+                    }
+                }
+            }
+        }
+        
+        // Update stats for newly assigned users
+        for (const userId of usersToAdd) {
+            await updateUserStats(userId, 'assigned');
+            // If task is already completed, increment completion count too
+            if (status === 'Completed') {
+                await updateUserStats(userId, 'completed');
+            }
         }
 
         try {
@@ -207,6 +315,7 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
                 dueDate: dueDateISO,
                 hasTime: !!dueTime,
                 updatedAt: new Date().toISOString(),
+                assignedUsers: newAssignedUsers,
                 lastUpdatedBy: {
                     uid: req.user.uid,
                     email: req.user.email,
