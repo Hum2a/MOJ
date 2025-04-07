@@ -13,6 +13,211 @@ const logComponentAction = (action, data = null) => {
   }
 };
 
+// Activity Log Modal Component
+const ActivityLogModal = ({ task, onClose, users = [] }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    // Fade in animation
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 10);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+  
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return 'Unknown time';
+    try {
+      return new Date(timestamp).toLocaleString();
+    } catch (e) {
+      console.error('Error formatting timestamp:', e);
+      return 'Invalid date';
+    }
+  };
+  
+  const getActionIcon = (action) => {
+    if (!action) return '📝';
+    
+    switch (action) {
+      case 'created': return '🆕';
+      case 'updated': return '✏️';
+      case 'status_updated': return '🔄';
+      case 'deleted': return '🗑️';
+      default: return '📝';
+    }
+  };
+  
+  const getActionLabel = (action) => {
+    if (!action) return 'Activity';
+    
+    switch (action) {
+      case 'created': return 'Created';
+      case 'updated': return 'Updated';
+      case 'status_updated': return 'Status Changed';
+      case 'deleted': return 'Deleted';
+      default: return action;
+    }
+  };
+  
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'Pending': return 'Pending';
+      case 'In Progress': return 'In Progress';
+      case 'Completed': return 'Completed';
+      default: return status;
+    }
+  };
+  
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'Pending': return 'status-pending';
+      case 'In Progress': return 'status-in-progress';
+      case 'Completed': return 'status-completed';
+      default: return '';
+    }
+  };
+  
+  const getUserName = (uid) => {
+    if (!uid) return 'Unknown user';
+    const user = users.find(u => u.uid === uid);
+    return user ? (user.name || uid) : uid;
+  };
+  
+  const renderActivityDetails = (activity) => {
+    if (!activity) return null;
+    
+    const { action, additionalInfo = {} } = activity;
+    
+    if (action === 'status_updated' && additionalInfo && additionalInfo.previousStatus && additionalInfo.newStatus) {
+      return (
+        <div className="activity-detail">
+          <div className="status-change">
+            <span className={`status-badge ${getStatusClass(additionalInfo.previousStatus)}`}>
+              {getStatusLabel(additionalInfo.previousStatus)}
+            </span>
+            <span className="status-arrow">→</span>
+            <span className={`status-badge ${getStatusClass(additionalInfo.newStatus)}`}>
+              {getStatusLabel(additionalInfo.newStatus)}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    
+    if (action === 'created' && additionalInfo) {
+      return (
+        <div className="activity-detail">
+          {additionalInfo.initialStatus && (
+            <p>
+              Initial status: <span className={`status-badge ${getStatusClass(additionalInfo.initialStatus)}`}>
+                {getStatusLabel(additionalInfo.initialStatus)}
+              </span>
+            </p>
+          )}
+          {additionalInfo.assignedUsers && additionalInfo.assignedUsers.length > 0 && (
+            <p>
+              Initial assignees: {additionalInfo.assignedUsers.map(uid => getUserName(uid)).join(', ')}
+            </p>
+          )}
+        </div>
+      );
+    }
+    
+    if (action === 'updated' && additionalInfo) {
+      const hasChanges = Object.keys(additionalInfo).length > 0;
+      
+      if (!hasChanges) return null;
+      
+      return (
+        <div className="activity-detail">
+          {additionalInfo.title && (
+            <p>Title: <span className="changed-from">{additionalInfo.title.from}</span> → <span className="changed-to">{additionalInfo.title.to}</span></p>
+          )}
+          {additionalInfo.description && (
+            <p>Description updated</p>
+          )}
+          {additionalInfo.status && (
+            <p>Status: <span className={`status-badge ${getStatusClass(additionalInfo.status.from)}`}>{getStatusLabel(additionalInfo.status.from)}</span> → <span className={`status-badge ${getStatusClass(additionalInfo.status.to)}`}>{getStatusLabel(additionalInfo.status.to)}</span></p>
+          )}
+          {additionalInfo.dueDate && (
+            <p>Due date changed</p>
+          )}
+          {additionalInfo.assignedUsers && (
+            <div>
+              {additionalInfo.assignedUsers.added && additionalInfo.assignedUsers.added.length > 0 && (
+                <p>Added users: {additionalInfo.assignedUsers.added.map(uid => getUserName(uid)).join(', ')}</p>
+              )}
+              {additionalInfo.assignedUsers.removed && additionalInfo.assignedUsers.removed.length > 0 && (
+                <p>Removed users: {additionalInfo.assignedUsers.removed.map(uid => getUserName(uid)).join(', ')}</p>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    return null;
+  };
+  
+  if (!task) {
+    console.log('No task provided to ActivityLogModal');
+    return null;
+  }
+  
+  const activityLog = task.activityLog || [];
+  console.log('Activity log in modal:', activityLog);
+  
+  return (
+    <div 
+      className={`modal-backdrop ${isVisible ? 'visible' : ''}`} 
+      onClick={handleClose}
+    >
+      <div 
+        className={`activity-modal ${isVisible ? 'visible' : ''}`} 
+        onClick={e => e.stopPropagation()}
+      >
+        <button className="close-button" onClick={handleClose}>×</button>
+        <div className="activity-header">
+          <h2>Activity Log - {task.title}</h2>
+        </div>
+        <div className="activity-content">
+          {activityLog.length > 0 ? (
+            <div className="activity-list">
+              {[...activityLog].reverse().map((activity, index) => (
+                <div key={index} className="activity-item">
+                  <div className="activity-icon">
+                    {getActionIcon(activity.action)}
+                  </div>
+                  <div className="activity-body">
+                    <div className="activity-title">
+                      <span className="activity-action">{getActionLabel(activity.action)}</span>
+                      <span className="activity-time">{formatTimestamp(activity.timestamp)}</span>
+                    </div>
+                    <div className="activity-user">
+                      by {activity.user ? (activity.user.name || activity.user.email) : 'Unknown user'}
+                    </div>
+                    {activity && renderActivityDetails(activity)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-activity">No activity recorded for this task.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const TaskManager = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -36,6 +241,7 @@ const TaskManager = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [viewActivityTask, setViewActivityTask] = useState(null);
 
   useEffect(() => {
     logComponentAction('Component Mounted');
@@ -100,6 +306,18 @@ const TaskManager = () => {
       setLoading(true);
       setError(null);
       const tasksList = await taskService.getAllTasks();
+      
+      // Add debug logging to inspect task structure
+      console.log('Tasks received from API:', tasksList);
+      if (tasksList.length > 0) {
+        console.log('First task structure:', tasksList[0]);
+        console.log('Activity log exists:', !!tasksList[0].activityLog);
+        if (tasksList[0].activityLog) {
+          console.log('Activity log entries:', tasksList[0].activityLog.length);
+          console.log('First activity log entry:', tasksList[0].activityLog[0]);
+        }
+      }
+      
       logComponentAction('Tasks Fetched', tasksList);
       setTasks(tasksList);
       setFilteredTasks(tasksList);
@@ -683,14 +901,26 @@ const TaskManager = () => {
                 Delete Task
               </button>
             </div>
+            <button 
+              className="activity-log-button"
+              onClick={() => setViewActivityTask(task)}
+            >
+              <span className="button-icon">📋</span> View Activity Log
+            </button>
           </div>
         ))}
       </div>
 
-      {/* Log whether the ProfileModal should be displayed */}
-      {console.log('Should show profile modal:', showProfileModal)}
-      {console.log('User profile data available:', userProfile)}
-      
+      {/* Activity Log Modal */}
+      {viewActivityTask && (
+        <ActivityLogModal 
+          task={viewActivityTask} 
+          onClose={() => setViewActivityTask(null)}
+          users={users}
+        />
+      )}
+
+      {/* Profile Modal */}
       {showProfileModal && (
         <ProfileModal 
           profile={userProfile} 

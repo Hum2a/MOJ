@@ -1049,3 +1049,219 @@
   margin-right: 0.25rem;
   font-size: 1.1rem;
 }
+
+/* Activity Log Styles */
+.activity-log-button {
+  width: 100%;
+  background-color: var(--secondary-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.activity-log-button:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.activity-log-button .button-icon {
+  font-size: 1.1rem;
+}
+
+/* Activity Log Modal */
+.activity-modal {
+  background-color: white;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-modal.visible {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.activity-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.activity-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.activity-icon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--secondary-color);
+  border-radius: 50%;
+}
+
+.activity-body {
+  flex: 1;
+}
+
+.activity-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.activity-action {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activity-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.activity-user {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.activity-detail {
+  background-color: var(--secondary-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.activity-detail p {
+  margin: 0.5rem 0;
+}
+
+.activity-detail p:first-child {
+  margin-top: 0;
+}
+
+.activity-detail p:last-child {
+  margin-bottom: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.status-pending {
+  background-color: var(--status-pending);
+  color: white;
+}
+
+.status-badge.status-in-progress {
+  background-color: var(--status-in-progress);
+  color: white;
+}
+
+.status-badge.status-completed {
+  background-color: var(--status-completed);
+  color: white;
+}
+
+.status-change {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-arrow {
+  color: var(--text-secondary);
+}
+
+.changed-from {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.changed-to {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.no-activity {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem 0;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .activity-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .activity-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

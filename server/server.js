@@ -51,6 +51,20 @@ const createISODate = (date, time = null) => {
     }
 };
 
+// Helper function to create activity log entry
+const createActivityLog = (action, user, additionalInfo = {}) => {
+  return {
+    action,
+    timestamp: new Date().toISOString(),
+    user: {
+      uid: user.uid,
+      name: user.name || user.email,
+      email: user.email
+    },
+    ...additionalInfo
+  };
+};
+
 // Helper function to update user stats
 const updateUserStats = async (userId, statType) => {
     try {
@@ -109,6 +123,14 @@ app.post('/api/tasks', authenticateUser, async (req, res) => {
             // Create ISO date string
             const dueDateISO = createISODate(dueDate, dueTime);
 
+            // Create initial activity log entry
+            const activityLog = [
+              createActivityLog('created', req.user, { 
+                initialStatus: status || 'Pending',
+                assignedUsers: assignedUsers || []
+              })
+            ];
+
             const taskData = {
                 title,
                 description: description || '',
@@ -122,7 +144,8 @@ app.post('/api/tasks', authenticateUser, async (req, res) => {
                     uid: req.user.uid,
                     email: req.user.email,
                     name: req.user.name || req.user.email
-                }
+                },
+                activityLog
             };
 
             const taskRef = await db.collection('tasks').add(taskData);
@@ -218,6 +241,12 @@ app.patch('/api/tasks/:id/status', authenticateUser, async (req, res) => {
             }
         }
 
+        // Create activity log entry for status change
+        const activityLogEntry = createActivityLog('status_updated', req.user, {
+            previousStatus,
+            newStatus: status
+        });
+
         await taskRef.update({
             status,
             updatedAt: new Date().toISOString(),
@@ -225,7 +254,8 @@ app.patch('/api/tasks/:id/status', authenticateUser, async (req, res) => {
                 uid: req.user.uid,
                 email: req.user.email,
                 name: req.user.name || req.user.email
-            }
+            },
+            activityLog: admin.firestore.FieldValue.arrayUnion(activityLogEntry)
         });
 
         const updatedTask = await taskRef.get();
@@ -245,6 +275,12 @@ app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
         if (!taskDoc.exists) {
             return res.status(404).json({ error: 'Task not found' });
         }
+
+        // Log the deletion action before deleting - optional since the task will be deleted
+        const activityLogEntry = createActivityLog('deleted', req.user);
+        await taskRef.update({
+            activityLog: admin.firestore.FieldValue.arrayUnion(activityLogEntry)
+        });
 
         await taskRef.delete();
         res.json({ message: 'Task deleted successfully' });
@@ -277,6 +313,7 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
         // Determine new users to add and existing users to remove
         const newAssignedUsers = assignedUsers || [];
         const usersToAdd = newAssignedUsers.filter(uid => !previousAssignedUsers.includes(uid));
+        const usersRemoved = previousAssignedUsers.filter(uid => !newAssignedUsers.includes(uid));
         
         // Handle status change stats updates
         if (previousStatus !== status) {
@@ -308,6 +345,24 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
             // Create ISO date string
             const dueDateISO = createISODate(dueDate, dueTime);
 
+            // Create activity log entry for task update
+            const changes = {};
+            if (title !== currentTask.title) changes.title = { from: currentTask.title, to: title };
+            if (description !== currentTask.description) changes.description = { from: currentTask.description, to: description };
+            if (status !== currentTask.status) changes.status = { from: currentTask.status, to: status };
+            if (dueDateISO !== currentTask.dueDate) changes.dueDate = { from: currentTask.dueDate, to: dueDateISO };
+            if (!!dueTime !== currentTask.hasTime) changes.hasTime = { from: currentTask.hasTime, to: !!dueTime };
+            
+            if (usersToAdd.length > 0 || usersRemoved.length > 0) {
+                changes.assignedUsers = {
+                    added: usersToAdd,
+                    removed: usersRemoved,
+                    current: newAssignedUsers
+                };
+            }
+
+            const activityLogEntry = createActivityLog('updated', req.user, changes);
+
             const taskData = {
                 title,
                 description: description || '',
@@ -323,7 +378,10 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
                 }
             };
 
-            await taskRef.update(taskData);
+            await taskRef.update({
+                ...taskData,
+                activityLog: admin.firestore.FieldValue.arrayUnion(activityLogEntry)
+            });
             
             const updatedTaskDoc = await taskRef.get();
             res.json({ id: updatedTaskDoc.id, ...updatedTaskDoc.data() });
