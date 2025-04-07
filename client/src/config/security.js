@@ -2,7 +2,7 @@ export const securityConfig = {
   // Authentication settings
   auth: {
     passwordPolicy: {
-      minLength: 12,
+      minLength: 8,
       requireUppercase: true,
       requireLowercase: true,
       requireNumbers: true,
@@ -10,7 +10,7 @@ export const securityConfig = {
       preventCommonPasswords: true,
     },
     mfa: {
-      enabled: true,
+      enabled: false,
       methods: ['authenticator', 'sms'],
       backupCodes: 10,
     },
@@ -97,37 +97,45 @@ export const securityConfig = {
 
 // Security utility functions
 export const securityUtils = {
-  // Sanitize user input
+  validatePassword: (password) => {
+    const { passwordPolicy } = securityConfig.auth;
+    const errors = [];
+
+    if (password.length < passwordPolicy.minLength) {
+      errors.push(`Password must be at least ${passwordPolicy.minLength} characters long`);
+    }
+
+    if (passwordPolicy.requireUppercase && !/[A-Z]/.test(password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    }
+
+    if (passwordPolicy.requireLowercase && !/[a-z]/.test(password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    }
+
+    if (passwordPolicy.requireNumbers && !/\d/.test(password)) {
+      errors.push('Password must contain at least one number');
+    }
+
+    if (passwordPolicy.requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('Password must contain at least one special character');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  },
+
   sanitizeInput: (input) => {
     if (typeof input !== 'string') return input;
-    return input
-      .replace(/[<>]/g, '')
-      .replace(/javascript:/gi, '')
-      .replace(/on\w+=/gi, '')
-      .trim();
+    return input.replace(/[<>]/g, '');
   },
 
   // Generate secure random tokens
   generateSecureToken: (length = 32) => {
     return crypto.getRandomValues(new Uint8Array(length))
       .reduce((acc, val) => acc + (val % 36).toString(36), '');
-  },
-
-  // Validate password strength
-  validatePassword: (password) => {
-    const { passwordPolicy } = securityConfig.auth;
-    const checks = {
-      length: password.length >= passwordPolicy.minLength,
-      uppercase: passwordPolicy.requireUppercase ? /[A-Z]/.test(password) : true,
-      lowercase: passwordPolicy.requireLowercase ? /[a-z]/.test(password) : true,
-      numbers: passwordPolicy.requireNumbers ? /\d/.test(password) : true,
-      special: passwordPolicy.requireSpecialChars ? /[!@#$%^&*]/.test(password) : true,
-    };
-    
-    return {
-      isValid: Object.values(checks).every(Boolean),
-      checks,
-    };
   },
 
   // Mask sensitive data
