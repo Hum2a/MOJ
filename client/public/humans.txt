@@ -1,0 +1,10 @@
+/* TEAM */
+Developer: Ministry of Justice Team
+Site: https://yourdomain.com
+Location: United Kingdom
+
+/* SITE */
+Last update: 2024/02/20
+Standards: HTML5, CSS3, ES6+
+Components: React, Firebase, Express
+Software: Visual Studio Code, Git 
