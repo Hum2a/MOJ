@@ -43,6 +43,8 @@ yarn-error.log*
 .tmp/
 *.log
 
+*.json
+
 # Optional: Storybook
 storybook-static/
 
