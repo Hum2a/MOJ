@@ -1,4 +1,4 @@
-import { securityConfig } from '../config/security';
+import { securityConfig, securityUtils } from '../config/security';
 
 class MonitoringService {
   constructor() {
@@ -238,20 +238,7 @@ class MonitoringService {
 
   // Sanitize sensitive data in logs
   sanitizeLogData(data) {
-    if (!data) return data;
-
-    const sanitized = { ...data };
-    const sensitiveFields = securityConfig.monitoring.sensitiveFields;
-
-    Object.keys(sanitized).forEach(key => {
-      if (sensitiveFields.includes(key.toLowerCase())) {
-        sanitized[key] = '[REDACTED]';
-      } else if (typeof sanitized[key] === 'object') {
-        sanitized[key] = this.sanitizeLogData(sanitized[key]);
-      }
-    });
-
-    return sanitized;
+    return securityUtils.sanitizeData(data, securityConfig.monitoring.sensitiveFields);
   }
 
   // Sanitize URLs in logs

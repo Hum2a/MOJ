@@ -132,6 +132,31 @@ export const securityUtils = {
     return input.replace(/[<>]/g, '');
   },
 
+  // Centralized data sanitization function
+  sanitizeData: (data, sensitiveFields) => {
+    if (!data) return data;
+    
+    if (Array.isArray(data)) {
+      return data.map(item => securityUtils.sanitizeData(item, sensitiveFields));
+    }
+    
+    if (typeof data === 'object' && data !== null) {
+      return Object.keys(data).reduce((acc, key) => {
+        // Skip sanitization for specific fields or redact sensitive ones
+        if (sensitiveFields.some(field => key.toLowerCase() === field.toLowerCase())) {
+          acc[key] = '[REDACTED]';
+        } else {
+          acc[key] = typeof data[key] === 'object' 
+            ? securityUtils.sanitizeData(data[key], sensitiveFields)
+            : securityUtils.sanitizeInput(data[key]);
+        }
+        return acc;
+      }, {});
+    }
+
+    return data;
+  },
+
   // Generate secure random tokens
   generateSecureToken: (length = 32) => {
     return crypto.getRandomValues(new Uint8Array(length))

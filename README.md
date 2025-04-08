@@ -28,9 +28,9 @@ The application features a modern React frontend, a secure Node.js/Express backe
 <summary><strong>📸 Screenshots</strong></summary>
 <br>
 
-| Landing Page | Task Dashboard | Task Details |
-|:-------------------------:|:-------------------------:|:-------------------------:|
-| ![Landing Page](https://via.placeholder.com/640x360) | ![Task Dashboard](https://via.placeholder.com/640x360) | ![Task Details](https://via.placeholder.com/640x360) |
+| Landing Page | Task Dashboard | Task Creation | User Profile |
+|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|
+| ![Landing Page](/client/public/landingpage.png) | ![Task Dashboard](/client/public/TaskPage.png) | ![Task Creation](/client/public/TaskCreation.png) | ![User Profile](/client/public/Profile.png) |
 
 </details>
 

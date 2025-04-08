@@ -40,7 +40,7 @@ class ApiService {
 
         // Sanitize request data
         if (config.data && typeof config.data === 'object') {
-          config.data = this.sanitizeRequestData(config.data);
+          config.data = securityUtils.sanitizeData(config.data, securityConfig.monitoring.sensitiveFields);
         }
 
         return config;
@@ -95,29 +95,6 @@ class ApiService {
     );
   }
 
-  // Sanitize request data
-  sanitizeRequestData(data) {
-    if (Array.isArray(data)) {
-      return data.map(item => this.sanitizeRequestData(item));
-    }
-    
-    if (typeof data === 'object' && data !== null) {
-      return Object.keys(data).reduce((acc, key) => {
-        // Skip sanitization for specific fields (e.g., passwords)
-        if (securityConfig.monitoring.sensitiveFields.includes(key)) {
-          acc[key] = data[key];
-        } else {
-          acc[key] = typeof data[key] === 'object' 
-            ? this.sanitizeRequestData(data[key])
-            : securityUtils.sanitizeInput(data[key]);
-        }
-        return acc;
-      }, {});
-    }
-
-    return data;
-  }
-
   // Validate response data
   validateResponseData(data) {
     // Check for common security issues in responses
@@ -152,7 +129,7 @@ class ApiService {
       status: error.response?.status,
       message: error.message,
       // Don't log sensitive headers
-      headers: this.sanitizeHeaders(error.config?.headers),
+      headers: securityUtils.sanitizeData(error.config?.headers, ['authorization', 'cookie', 'x-csrf-token']),
     };
 
     // Log to monitoring service or console in development
@@ -162,21 +139,6 @@ class ApiService {
       // Implement production logging service
       // this.monitoringService.logError(errorLog);
     }
-  }
-
-  // Sanitize headers for logging
-  sanitizeHeaders(headers) {
-    if (!headers) return {};
-    
-    const sensitiveHeaders = ['authorization', 'cookie', 'x-csrf-token'];
-    return Object.keys(headers).reduce((acc, key) => {
-      if (sensitiveHeaders.includes(key.toLowerCase())) {
-        acc[key] = '[REDACTED]';
-      } else {
-        acc[key] = headers[key];
-      }
-      return acc;
-    }, {});
   }
 
   // Generic request method with rate limiting
