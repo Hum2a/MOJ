@@ -18,7 +18,7 @@
 
 </div>
 
-## 📋 Overview
+## Overview
 
 HMCTS Task Manager is a comprehensive task management solution built to streamline casework workflows. It enables caseworkers to efficiently create, track, and manage tasks, improving productivity and collaboration across teams.
 
@@ -34,7 +34,7 @@ The application features a modern React frontend, a secure Node.js/Express backe
 
 </details>
 
-## ✨ Features
+## Features
 
 - **Comprehensive Task Management**
   - Create, update, and delete tasks
@@ -68,7 +68,7 @@ The application features a modern React frontend, a secure Node.js/Express backe
   - Secure authentication flows
   - GDPR-compliant data handling
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -144,7 +144,7 @@ npm start
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🖼️ Branding Assets
+## Branding Assets
 
 The application includes a comprehensive set of branding assets:
 
@@ -184,7 +184,7 @@ If you need to incorporate these assets in additional locations:
 <link rel="icon" type="image/png" sizes="512x512" href="%PUBLIC_URL%/android-chrome-512x512.png" />
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### Frontend Architecture
 
@@ -232,7 +232,7 @@ graph TD
     F --> H[Firestore Database]
 ```
 
-## 🔒 Security
+## Security
 
 HMCTS Task Manager implements numerous security measures:
 
@@ -261,7 +261,7 @@ HMCTS Task Manager implements numerous security measures:
   - Dependency security scanning
   - Regular security updates
 
-## 📚 API Documentation
+## API Documentation
 
 ### Authentication Endpoints
 
@@ -292,7 +292,7 @@ HMCTS Task Manager implements numerous security measures:
 | PUT    | `/api/users/:id` | Update user information | Yes |
 | GET    | `/api/users/:id/stats` | Get user statistics | Yes |
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions to HMCTS Task Manager! Please see our [Contributing Guide](CONTRIBUTING.md) for more information.
 
